@@ -39,10 +39,7 @@ def _write_p2_file(filename, theta):
     )
 
 
-def _write_krn_file(filename):
-    K1 = 4.3e6
-    Js = 1.6
-    A = 7.7e-12
+def _write_krn_file(filename, Js, K1, A):
     Path(filename.with_suffix(".krn")).write_text(
         dedent(
             f"""\
@@ -53,7 +50,7 @@ def _write_krn_file(filename):
     )
 
 
-@pytest.mark.parametrize("angle_deg", [15, 45, 75])
+@pytest.mark.parametrize("angle_deg", [15, 30, 45, 60, 75])
 def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
     """Test switch in Stoner-Wohlfarth model."""
     system_name = f"sw_{angle_deg}"
@@ -68,7 +65,10 @@ def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
 
     # write input files
     _write_p2_file(tmp_path / system_name, theta)
-    _write_krn_file(tmp_path / system_name)
+    Js = 1.6
+    K1 = 4.3e6
+    A = 7.7e-12
+    _write_krn_file(tmp_path / system_name, Js=Js, K1=K1, A=A)
 
     # run hysteresis loop without demag
     cmd = shlex.split(f"{loop_bin} {system_name} --verbose")
@@ -83,6 +83,6 @@ def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
     Bc = Hc.q.to("T", equivalencies=u.magnetic_flux_field())
 
     # evaluate Bc from theory
-    Bk_si = 2 * 4e-7 * np.pi * 4.3e6 / 1.6
+    Bk_si = 2 * 4e-7 * np.pi * K1 / Js
     Bc_theory = Bk_si * (np.cbrt(np.sin(theta) ** 2) + np.cbrt(np.cos(theta) ** 2)) ** (-1.5)
-    assert np.isclose(Bc.value, Bc_theory, rtol=0.1)  # Coarse grid, coarse sweep
+    assert np.isclose(Bc.value, Bc_theory, rtol=0.1)
