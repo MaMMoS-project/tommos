@@ -29,8 +29,8 @@ def test_extrinsic_properties(loop_bin, mesh_bin, tmp_path):
     system_name = "Fe233Ta067Y"
 
     # geometry parameters
-    cube_length = 20
-    mesh_size = 2
+    cube_length = 20 * u.nm
+    mesh_size = 2 * u.nm
 
     # intrinsic properties
     # Material intrinsic properties calculated using databases from mammos_dft and
@@ -41,14 +41,14 @@ def test_extrinsic_properties(loop_bin, mesh_bin, tmp_path):
     Js = Ms.q.to("T", equivalencies=u.magnetic_flux_field())
 
     # external field
-    hstart = 5.0  # Tesla
-    hfinal = -5.0  # Tesla
-    hstep = -0.25  # Tesla
+    hstart = 5.0 * u.T
+    hfinal = -5.0 * u.T
+    hstep = -0.25 * u.T
 
     # generate input files
-    generate_mesh(mesh_bin, tmp_path, system_name, cube_length, mesh_size)
+    generate_mesh(mesh_bin, tmp_path, system_name, cube_length.value, mesh_size.value)
     write_krn_file(tmp_path / f"{system_name}.krn", Js.value, K1.value, A.value)
-    write_p2_file(tmp_path / f"{system_name}.p2", hstart, hfinal, hstep)
+    write_p2_file(tmp_path / f"{system_name}.p2", hstart.value, hfinal.value, hstep.value)
     run_hysteresis_loop(loop_bin, tmp_path, system_name)
 
     # test that switch only happens after known value
