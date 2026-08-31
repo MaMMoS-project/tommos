@@ -50,7 +50,7 @@ def _write_krn_file(filename, Js, K1, A):
     )
 
 
-@pytest.mark.parametrize("angle_deg", [15, 30, 45, 60, 75])
+@pytest.mark.parametrize("angle_deg", [1, 15, 30, 45, 60, 75, 89])
 def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
     """Test switch in Stoner-Wohlfarth model."""
     system_name = f"sw_{angle_deg}"
@@ -84,5 +84,9 @@ def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
 
     # evaluate Bc from theory
     Bk_si = 2 * 4e-7 * np.pi * K1 / Js
-    Bc_theory = Bk_si * (np.cbrt(np.sin(theta) ** 2) + np.cbrt(np.cos(theta) ** 2)) ** (-1.5)
-    assert np.isclose(Bc.value, Bc_theory, rtol=0.1)
+    Bc_theory_small_angle = Bk_si * (np.cbrt(np.sin(theta) ** 2) + np.cbrt(np.cos(theta) ** 2)) ** (-1.5)
+    Bc_theory_big_angle = 0.5 * Bk_si * np.sin(2 * theta)
+    if angle_deg <= 45:
+        np.testing.assert_allclose(Bc.value, Bc_theory_small_angle, rtol=0.1, atol=0)
+    else:
+        np.testing.assert_allclose(Bc.value, Bc_theory_big_angle, rtol=0.1, atol=0)
