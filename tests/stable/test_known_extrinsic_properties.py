@@ -1,5 +1,11 @@
 """Test known extrinsic properties of Fe2.33Ta0.67Y at 300K.
 
+The chosen geometry is a cube of side length 20nm.
+Intrinsic properties are defined as:
+- spontaneous magnetization Ms = 406 kA/m
+- exchange stiffness constant A = 1.4 pJ / m
+- anisotropy constant K1 = 930 kJ / m3
+
 This material was chosen for the MaMMoS demonstrator, so its extrinsic properties
 are appoximately known:
 - Hc = 3.5 MA/m
