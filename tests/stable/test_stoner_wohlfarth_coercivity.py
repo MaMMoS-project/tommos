@@ -15,7 +15,7 @@ import pytest
 from mammos_analysis.hysteresis import extract_coercive_field
 
 
-def _write_p2_file(filename, theta):
+def _write_p2_file(filename, theta, mu0_Hk):
     Path(filename.with_suffix(".p2")).write_text(
         dedent(
             f"""\
@@ -31,9 +31,9 @@ def _write_p2_file(filename, theta):
             hx = {np.sin(theta)}
             hy = 0
             hz = {np.cos(theta)}
-            hstart = 8.0
-            hfinal = -8.1
-            hstep = -0.5
+            hstart = {1.5 * mu0_Hk}
+            hfinal = {-1.5 * mu0_Hk}
+            hstep = {-0.1 * mu0_Hk}
             """
         )
     )
@@ -50,25 +50,31 @@ def _write_krn_file(filename, Js, K1, A):
     )
 
 
-@pytest.mark.parametrize("angle_deg", [1, 15, 30, 45, 60, 75, 89])
-def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
-    """Test switch in Stoner-Wohlfarth model."""
-    system_name = f"sw_{angle_deg}"
-    theta = np.deg2rad(angle_deg)
-
-    # generate mesh
-    L = 20.0
-    h = 4.0  # Coarse for speed
+def _generate_mesh(tmp_path, mesh_bin, system_name, L, h):
     cmd = shlex.split(f"{mesh_bin} --geom box --extent {L},{L},{L} --h {h} --out-name {system_name}")
     res = subprocess.run(cmd, cwd=tmp_path)
     res.check_returncode()
 
+
+@pytest.mark.parametrize("angle_deg", [1, 15, 30, 45, 60, 75, 89])
+def test_stoner_wohlfarth_coercivity(loop_bin, mesh_bin, tmp_path, angle_deg):
+    """Test coercivity in Stoner-Wohlfarth model."""
+    system_name = f"sw_{angle_deg}"
+    theta = np.deg2rad(angle_deg)
+
+    # generate mesh
+    L = 20.0 * u.nm
+    h = 4.0 * u.nm  # Coarse for speed
+    _generate_mesh(tmp_path, mesh_bin, system_name, L.value, h.value)
+
     # write input files
-    _write_p2_file(tmp_path / system_name, theta)
-    Js = 1.6
-    K1 = 4.3e6
-    A = 7.7e-12
-    _write_krn_file(tmp_path / system_name, Js=Js, K1=K1, A=A)
+    Js = me.Js(1.6, "T")
+    K1 = me.K1(4.3 * u.MJ / u.m**3, "J/m3")
+    A = me.A(7.7 * u.pJ / u.m, "J/m")
+    _write_krn_file(tmp_path / system_name, Js=Js.value, K1=K1.value, A=A.value)
+    Ms = me.Ms(Js.q.to("A/m", equivalencies=u.magnetic_flux_field()))
+    mu0_Hk = (2 * K1.q / Ms.q).to("T", equivalencies=u.magnetic_flux_field())
+    _write_p2_file(tmp_path / system_name, theta, mu0_Hk.value)
 
     # run hysteresis loop without demag
     cmd = shlex.split(f"{loop_bin} {system_name} --verbose")
@@ -83,10 +89,9 @@ def test_stoner_wohlfarth_switching(loop_bin, mesh_bin, tmp_path, angle_deg):
     Bc = Hc.q.to("T", equivalencies=u.magnetic_flux_field())
 
     # evaluate Bc from theory
-    Bk_si = 2 * 4e-7 * np.pi * K1 / Js
-    Bc_theory_small_angle = Bk_si * (np.cbrt(np.sin(theta) ** 2) + np.cbrt(np.cos(theta) ** 2)) ** (-1.5)
-    Bc_theory_big_angle = 0.5 * Bk_si * np.sin(2 * theta)
+    Bc_theory_small_angle = mu0_Hk * (np.cbrt(np.sin(theta) ** 2) + np.cbrt(np.cos(theta) ** 2)) ** (-1.5)
+    Bc_theory_big_angle = 0.5 * mu0_Hk * np.sin(2 * theta)
     if angle_deg <= 45:
-        np.testing.assert_allclose(Bc.value, Bc_theory_small_angle, rtol=0.1, atol=0)
+        np.testing.assert_allclose(Bc, Bc_theory_small_angle, rtol=0.1, atol=0)
     else:
-        np.testing.assert_allclose(Bc.value, Bc_theory_big_angle, rtol=0.1, atol=0)
+        np.testing.assert_allclose(Bc, Bc_theory_big_angle, rtol=0.1, atol=0)
