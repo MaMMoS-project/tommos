@@ -24,8 +24,8 @@ def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
     system_name = "sphere"
 
     # geometry parameters
-    ellipsoid_parameters = (12, 12, 12)  # sphere
-    mesh_size = 1
+    ellipsoid_parameters = (12.0, 12.0, 12.0)  # sphere
+    mesh_size = 1.0
 
     # intrinsic properties
     K1 = 4.3e6
@@ -58,8 +58,8 @@ def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     system_name = "oblate_ellipsoid"
 
     # geometry parameters
-    ellipsoid_parameters = (6, 6, 3)
-    mesh_size = 1
+    ellipsoid_parameters = (6.0, 6.0, 3.0)
+    mesh_size = 1.0
 
     # intrinsic properties
     K1 = 4.3e6
@@ -92,7 +92,7 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     system_name = "prolate_ellipsoid"
 
     # geometry parameters
-    ellipsoid_parameters = (3, 3, 6)
+    ellipsoid_parameters = (3.0, 3.0, 6.0)
     mesh_size = 0.5
 
     # intrinsic properties
@@ -119,7 +119,7 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
 
 
 def generate_mesh(
-    mesh_bin: str, tmp_path: os.PathLike, system_name: str, ellipsoid_parameters: tuple[int], mesh_size: int
+    mesh_bin: str, tmp_path: os.PathLike, system_name: str, ellipsoid_parameters: tuple[float], mesh_size: float
 ) -> None:
     """Generate mesh from standard problem 4."""
     extent = ",".join(str(par) for par in ellipsoid_parameters)
