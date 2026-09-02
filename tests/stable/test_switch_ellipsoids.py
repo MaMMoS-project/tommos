@@ -17,6 +17,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import mammos_entity as me
+import mammos_units as u
 
 
 def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
@@ -24,23 +25,23 @@ def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
     system_name = "sphere"
 
     # geometry parameters
-    ellipsoid_parameters = (12.0, 12.0, 12.0)  # sphere
-    mesh_size = 1.0
+    ellipsoid_parameters = (12.0, 12.0, 12.0) * u.nm  # sphere
+    mesh_size = 1.0 * u.nm
 
     # intrinsic properties
-    K1 = 4.3e6
-    Js = 1.61
-    A = 7.7e-12
+    K1 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 4.3e6, "J/m3")
+    Js = me.Entity("SpontaneousMagneticPolarization", 1.61, "T")
+    A = me.Entity("ExchangeStiffnessConstant", 7.7e-12, "J/m")
 
     # external field
-    hstart = -6.0
-    hfinal = -7.0
-    hstep = -0.01
+    hstart = -6.0 * u.T
+    hfinal = -7.0 * u.T
+    hstep = -0.01 * u.T
 
     # generate input files
-    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters, mesh_size)
-    write_krn_file(tmp_path / f"{system_name}.krn", Js, K1, A)
-    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart, hfinal=hfinal, hstep=hstep)
+    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters.value, mesh_size.value)
+    write_krn_file(tmp_path / f"{system_name}.krn", Js.value, K1.value, A.value)
+    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart.value, hfinal=hfinal.value, hstep=hstep.value)
     run_hysteresis_loop(loop_bin, tmp_path, system_name)
 
     # test that switch only happens after known value
@@ -58,23 +59,23 @@ def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     system_name = "oblate_ellipsoid"
 
     # geometry parameters
-    ellipsoid_parameters = (6.0, 6.0, 3.0)
-    mesh_size = 1.0
+    ellipsoid_parameters = (6.0, 6.0, 3.0) * u.nm
+    mesh_size = 1.0 * u.nm
 
     # intrinsic properties
-    K1 = 4.3e6
-    Js = 1.61
-    A = 7.7e-12
+    K1 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 4.3e6, "J/m3")
+    Js = me.Entity("SpontaneousMagneticPolarization", 1.61, "T")
+    A = me.Entity("ExchangeStiffnessConstant", 7.7e-12, "J/m")
 
     # external field
-    hstart = -6.0
-    hfinal = -6.2
-    hstep = -0.01
+    hstart = -6.0 * u.T
+    hfinal = -6.2 * u.T
+    hstep = -0.01 * u.T
 
     # generate input files
-    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters, mesh_size)
-    write_krn_file(tmp_path / f"{system_name}.krn", Js, K1, A)
-    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart, hfinal=hfinal, hstep=hstep)
+    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters.value, mesh_size.value)
+    write_krn_file(tmp_path / f"{system_name}.krn", Js.value, K1.value, A.value)
+    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart.value, hfinal=hfinal.value, hstep=hstep.value)
     run_hysteresis_loop(loop_bin, tmp_path, system_name)
 
     # test that switch only happens after known value
@@ -92,23 +93,23 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     system_name = "prolate_ellipsoid"
 
     # geometry parameters
-    ellipsoid_parameters = (3.0, 3.0, 6.0)
-    mesh_size = 0.5
+    ellipsoid_parameters = (3.0, 3.0, 6.0) * u.nm
+    mesh_size = 0.5 * u.nm
 
     # intrinsic properties
-    K1 = 4.3e6
-    Js = 1.61
-    A = 7.7e-12
+    K1 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 4.3e6, "J/m3")
+    Js = me.Entity("SpontaneousMagneticPolarization", 1.61, "T")
+    A = me.Entity("ExchangeStiffnessConstant", 7.7e-12, "J/m")
 
     # external field
-    hstart = -6.5
-    hfinal = -7.0
-    hstep = -0.01
+    hstart = -6.5 * u.T
+    hfinal = -7.0 * u.T
+    hstep = -0.01 * u.T
 
     # generate input files
-    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters, mesh_size)
-    write_krn_file(tmp_path / f"{system_name}.krn", Js, K1, A)
-    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart, hfinal=hfinal, hstep=hstep)
+    generate_mesh(mesh_bin, tmp_path, system_name, ellipsoid_parameters.value, mesh_size.value)
+    write_krn_file(tmp_path / f"{system_name}.krn", Js.value, K1.value, A.value)
+    write_p2_file(tmp_path / f"{system_name}.p2", hstart=hstart.value, hfinal=hfinal.value, hstep=hstep.value)
     run_hysteresis_loop(loop_bin, tmp_path, system_name)
 
     # test that switch only happens after known value
