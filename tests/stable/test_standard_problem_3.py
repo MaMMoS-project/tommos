@@ -30,7 +30,7 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
     for it, L in enumerate(L_array):
         print(f"{L=}")
         # generate meshes
-        generate_mesh(mesh_bin, tmp_path, f"vortex-{it}", L * l_ex, h * l_ex)
+        generate_cubic_mesh(mesh_bin, tmp_path, f"vortex-{it}", L * l_ex.value, h * l_ex.value)
         shutil.copyfile(tmp_path / f"vortex-{it}.npz", tmp_path / f"flower-{it}.npz")
         # generate parameters
         write_p2_file(tmp_path / f"vortex-{it}.p2", "vortex")
@@ -47,10 +47,10 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
     assert np.isclose(crossing, 8.5, atol=0.25)
 
 
-def generate_mesh(mesh_bin, tmp_path, system_name: str, side_length: float, mesh_size: float):
+def generate_cubic_mesh(mesh_bin, tmp_path, system_name: str, side_length: float, mesh_size: float):
     """Generate cubic mesh with given side length and mesh size."""
     extent = ",".join([str(side_length)] * 3)
-    cmd = shlex.split(f"{mesh_bin} --geom ellipsoid --extent {extent} --h {mesh_size} --out-name {system_name}")
+    cmd = shlex.split(f"{mesh_bin} --geom box --extent {extent} --h {mesh_size} --out-name {system_name}")
     res = subprocess.run(cmd, cwd=tmp_path)
     res.check_returncode()
 
