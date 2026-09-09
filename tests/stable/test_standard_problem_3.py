@@ -8,6 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import mammos_entity as me
+import mammos_units as u
 import numpy as np
 
 
@@ -17,16 +18,18 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
     - https://www.ctcms.nist.gov/~rdm/mumag.org.html
     - https://ubermag.github.io/examples/notebooks/07-tutorial-standard-problem3.html
     """
-    # intrinsic properties
-    mu_0 = 4e-7 * np.pi
-    Js = 1.05
-    A = 1.3e-11
-    Km = 0.5 * Js * Js / mu_0
-    K1 = 0.1 * Km
-    l_ex = np.sqrt(A / Km)
+    # Chosen intrinsic properties
+    Js = me.Entity("SpontaneousMagneticPolarization", 1.05, "T")
+    A = me.Entity("ExchangeStiffnessConstant", 1.3e-11, "J/m")
 
-    L_array = np.linspace(8, 9, 5)
-    h = 0.5
+    # Derived properties
+    Ms = me.Entity("SpontaneousMagnetization", Js.q.to("A/m", equivalencies=u.magnetic_flux_field()))
+    Km = me.Entity("EnergyDensity", 0.5 * u.constants.mu0 * Ms.q**2, "J/m3")  # magnetostatic energy density
+    l_ex = np.sqrt(A.q / Km.q).to("nm")  # intrinsic length scale
+    K1 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 0.1 * Km.q, "J/m3")
+
+    L_array = np.linspace(7.5, 8.5, 11)
+    h = 0.4
     for it, L in enumerate(L_array):
         # generate meshes
         generate_cubic_mesh(mesh_bin, tmp_path, f"vortex-{it}", L * l_ex.value, h * l_ex.value)
@@ -35,14 +38,14 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
         write_p2_file(tmp_path / f"vortex-{it}.p2", "vortex")
         write_p2_file(tmp_path / f"flower-{it}.p2", "flower")
         # generate material properties
-        write_krn_file(tmp_path / f"vortex-{it}.krn", Js=Js, A=A, K1=K1)
+        write_krn_file(tmp_path / f"vortex-{it}.krn", Js=Js.value, A=A.value, K1=K1.value)
         shutil.copyfile(tmp_path / f"vortex-{it}.krn", tmp_path / f"flower-{it}.krn")
         # run hysteresis loops
         run_hysteresis_loop(loop_bin, tmp_path, f"vortex-{it}")
         run_hysteresis_loop(loop_bin, tmp_path, f"flower-{it}")
 
     crossing = evaluate_crossing(tmp_path, L_array)
-    assert np.isclose(crossing, 8.5, atol=0.25)
+    assert np.isclose(crossing, 8, atol=0.1)
 
 
 def generate_cubic_mesh(mesh_bin, tmp_path, system_name: str, side_length: float, mesh_size: float):
