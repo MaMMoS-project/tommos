@@ -28,7 +28,6 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
     L_array = np.linspace(8, 9, 5)
     h = 0.5
     for it, L in enumerate(L_array):
-        print(f"{L=}")
         # generate meshes
         generate_cubic_mesh(mesh_bin, tmp_path, f"vortex-{it}", L * l_ex.value, h * l_ex.value)
         shutil.copyfile(tmp_path / f"vortex-{it}.npz", tmp_path / f"flower-{it}.npz")
@@ -43,7 +42,6 @@ def test_standard_problem_3(loop_bin: str, mesh_bin: str, tmp_path: os.PathLike)
         run_hysteresis_loop(loop_bin, tmp_path, f"flower-{it}")
 
     crossing = evaluate_crossing(tmp_path, L_array)
-    print(f"{crossing=}")
     assert np.isclose(crossing, 8.5, atol=0.25)
 
 
@@ -108,7 +106,6 @@ def evaluate_crossing(tmp_path, L_array):
         hystloop_flower = me.from_csv(tmp_path / f"hyst_flower-{it}" / "mammos_hysteresis.csv")
         E_diff.append(hystloop_vortex.E.value - hystloop_flower.E.value)
     E_diff = np.array(E_diff)
-    print(f"{E_diff=}")
     mask = E_diff * E_diff[0] < 0  # which values have same sign as the first value
     j = mask.argmax()  # first index of different sign than the first value
     y = E_diff[j - 1 : j + 1]
