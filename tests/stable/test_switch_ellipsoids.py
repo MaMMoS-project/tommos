@@ -14,13 +14,18 @@ import numpy as np
 def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
     """Test switching field of a sphere.
 
-    If the diameter of the sphere is smaller than the critical radius for uniform ration, the nucleation field is
-    `B_nucl = 2 K1 / Js` when the field is exactly antiparallel to the easy axis, where `K1` is the anisotropy constant
-    and `Js` is the magnetic polarization.
+    For a spherical Stoner-Wohlfarth particle (single-domain and uniformly magnetized) with uniaxial anisotropy, the
+    characteristic anisotropy field is defined as `H_K = 2 K1 / Ms`, where `K1` is the anisotropy constant and `Ms` is
+    the spontaneous magnetization.
 
-    Using the Stoner-Wohlwarth reduction factor `[cos(theta)^(2/3) + sin(theta)^(2/3)]^(-3/2)`, where
-    `theta` is the angle between the external applied field and the anisotropy easy axis, then the switching
-    field is equal to the multiplication of the nucleation field and such reduction factor.
+    Taking `theta` as the angle between the applied-field axis and the anisotropy easy axis, the Stoner–Wohlfarth
+    switching field is given by `H_sw(theta) = H_K [sin(theta)^(2/3) + cos(theta)^(2/3)]^(-3/2)`.
+
+    The corresponding coercive field, defined as the field at which the magnetization component along the applied-field
+    axis changes sign, is given by:
+    - `H_c = H_sw(theta)` for `0 <= theta <= pi/4`
+    - `H_c = H_K/2 sin(2 theta)` for `pi/4 <= theta <= pi/2`.
+
     """
     system_name = "sphere"
 
@@ -36,10 +41,12 @@ def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
     h = np.array([0.0017453283658983088, 0.0, 0.9999984769132877])  # applied field direction
     theta = np.arccos(np.inner(k, h))  # angle between the two directions
 
-    # external field
-    nucleation_field = (2 * K1.q / Js.q).to("T", equivalencies=u.magnetic_flux_field())
-    hstart = -nucleation_field + 0.5 * u.T
-    hfinal = -nucleation_field - 0.5 * u.T
+    # anisotropy field and external field
+    Ms = me.Entity("SpontaneousMagnetization", (Js.q).to("A/m", equivalencies=u.magnetic_flux_field()))
+    H_K = me.Entity("AnisotropyField", (2 * K1.q / Ms.q).to("A/m", equivalencies=u.magnetic_flux_field()))
+    H_K_T = H_K.q.to("T", equivalencies=u.magnetic_flux_field())
+    hstart = -H_K_T + 0.5 * u.T
+    hfinal = -H_K_T - 0.5 * u.T
     hstep = -0.01 * u.T
 
     # generate input files
@@ -51,10 +58,11 @@ def test_switch_sphere(loop_bin, mesh_bin, tmp_path):
     # test that switch only happens after known value
     hystloop = me.from_csv(tmp_path / f"hyst_{system_name}" / "mammos_hysteresis.csv")
     df = hystloop.to_dataframe()
-    reduction_factor = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
-    switching_field = reduction_factor * nucleation_field
-    assert all(df[df["B_ext_T"] > -switching_field.value]["J_par_T"] > 0)
-    assert all(df[df["B_ext_T"] < -switching_field.value]["J_par_T"] < 0)
+    factor_sw = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
+    H_sw = me.Entity("SwitchingFieldCoercivity", H_K.q * factor_sw)
+    H_sw_T = H_sw.q.to("T", equivalencies=u.magnetic_flux_field())
+    assert all(df[df["B_ext_T"] > -H_sw_T.value]["J_par_T"] > 0)
+    assert all(df[df["B_ext_T"] < -H_sw_T.value]["J_par_T"] < 0)
 
 
 def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
@@ -63,13 +71,18 @@ def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     This is an ellipsoid elongated on two of its axes. We assume that `a = b > c = a/2`. In this case the
     demagnetizing factors are `Na=0.2364` (normal to the easy axis) and `Nc=0.5272` (parallel to the easy axis).
 
-    If the diameter of the sphere is smaller than the critical radius for uniform ration, the nucleation field is
-    `B_nucl = 2 K1 / Js - Js (Nc - Na)` when the field is exactly antiparallel to the easy axis, where `K1` is the
-    anisotropy constant and `Js` is the magnetic polarization.
+    For such an elliptical Stoner-Wohlfarth particle (single-domain and uniformly magnetized) with uniaxial anisotropy,
+    the characteristic anisotropy field is defined as `H_K = 2 K1 / Ms - Ms (Nc - Na)`, where `K1` is the anisotropy
+    constant, `Ms` is the spontaneous magnetization.
 
-    Using the Stoner-Wohlwarth reduction factor `[cos(theta)^(2/3) + sin(theta)^(2/3)]^(-3/2)`, where
-    `theta` is the angle between the external applied field and the anisotropy easy axis, then the switching
-    field is equal to the multiplication of the nucleation field and such reduction factor.
+    Taking `theta` as the angle between the applied-field axis and the anisotropy easy axis, the Stoner–Wohlfarth
+    switching field is given by `H_sw(theta) = H_K [sin(theta)^(2/3) + cos(theta)^(2/3)]^(-3/2)`.
+
+    The corresponding coercive field, defined as the field at which the magnetization component along the applied-field
+    axis changes sign, is given by:
+    - `H_c = H_sw(theta)` for `0 <= theta <= pi/4`
+    - `H_c = H_K/2 sin(2 theta)` for `pi/4 <= theta <= pi/2`.
+
     """
     system_name = "oblate_ellipsoid"
 
@@ -87,10 +100,14 @@ def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     h = np.array([0.0017453283658983088, 0.0, 0.9999984769132877])  # applied field direction
     theta = np.arccos(np.inner(k, h))  # angle between the two directions
 
-    # external field
-    nucleation_field = (2 * K1.q / Js.q).to("T", equivalencies=u.magnetic_flux_field()) - Js.q * (Nc - Na)
-    hstart = -nucleation_field + 0.5 * u.T
-    hfinal = -nucleation_field - 0.5 * u.T
+    # anisotropy field and external field
+    Ms = me.Entity("SpontaneousMagnetization", (Js.q).to("A/m", equivalencies=u.magnetic_flux_field()))
+    H_K = me.Entity(
+        "AnisotropyField", (2 * K1.q / Ms.q).to("A/m", equivalencies=u.magnetic_flux_field()) - Ms.q * (Nc - Na)
+    )
+    H_K_T = H_K.q.to("T", equivalencies=u.magnetic_flux_field())
+    hstart = -H_K_T + 0.5 * u.T
+    hfinal = -H_K_T - 0.5 * u.T
     hstep = -0.01 * u.T
 
     # generate input files
@@ -102,10 +119,11 @@ def test_switch_oblate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     # test that switch only happens after known value
     hystloop = me.from_csv(tmp_path / f"hyst_{system_name}" / "mammos_hysteresis.csv")
     df = hystloop.to_dataframe()
-    reduction_factor = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
-    switching_field = reduction_factor * nucleation_field
-    assert all(df[df["B_ext_T"] > -switching_field.value]["J_par_T"] > 0)
-    assert all(df[df["B_ext_T"] < -switching_field.value]["J_par_T"] < 0)
+    factor_sw = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
+    H_sw = me.Entity("SwitchingFieldCoercivity", H_K.q * factor_sw)
+    H_sw_T = H_sw.q.to("T", equivalencies=u.magnetic_flux_field())
+    assert all(df[df["B_ext_T"] > -H_sw_T.value]["J_par_T"] > 0)
+    assert all(df[df["B_ext_T"] < -H_sw_T.value]["J_par_T"] < 0)
 
 
 def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
@@ -114,13 +132,18 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     This is an ellipsoid elongated on one of its axes. We assume that `a > b = c = a/2`. In this case the
     demagnetizing factors are `Na=0.17356` (parallel to the easy axis) and `Nc=0.41332` (normal to the easy axis).
 
-    If the diameter of the sphere is smaller than the critical radius for uniform ration, the nucleation field is
-    `B_nucl = 2 K1 / Js - Js (Na - Nc)` when the field is exactly antiparallel to the easy axis, where `K1` is the
-    anisotropy constant and `Js` is the magnetic polarization.
+    For such an elliptical Stoner-Wohlfarth particle (single-domain and uniformly magnetized) with uniaxial anisotropy,
+    the characteristic anisotropy field is defined as `H_K = 2 K1 / Ms - Ms (Na - Nc)`, where `K1` is the anisotropy
+    constant, `Ms` is the spontaneous magnetization.
 
-    Using the Stoner-Wohlwarth reduction factor `[cos(theta)^(2/3) + sin(theta)^(2/3)]^(-3/2)`, where
-    `theta` is the angle between the external applied field and the anisotropy easy axis, then the switching
-    field is equal to the multiplication of the nucleation field and such reduction factor.
+    Taking `theta` as the angle between the applied-field axis and the anisotropy easy axis, the Stoner–Wohlfarth
+    switching field is given by `H_sw(theta) = H_K [sin(theta)^(2/3) + cos(theta)^(2/3)]^(-3/2)`.
+
+    The corresponding coercive field, defined as the field at which the magnetization component along the applied-field
+    axis changes sign, is given by:
+    - `H_c = H_sw(theta)` for `0 <= theta <= pi/4`
+    - `H_c = H_K/2 sin(2 theta)` for `pi/4 <= theta <= pi/2`.
+
     """
     system_name = "prolate_ellipsoid"
 
@@ -139,9 +162,13 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     theta = np.arccos(np.inner(k, h))  # angle between the two directions
 
     # external field
-    nucleation_field = (2 * K1.q / Js.q).to("T", equivalencies=u.magnetic_flux_field()) - Js.q * (Na - Nc)
-    hstart = -nucleation_field + 0.5 * u.T
-    hfinal = -nucleation_field - 0.5 * u.T
+    Ms = me.Entity("SpontaneousMagnetization", (Js.q).to("A/m", equivalencies=u.magnetic_flux_field()))
+    H_K = me.Entity(
+        "AnisotropyField", (2 * K1.q / Ms.q).to("A/m", equivalencies=u.magnetic_flux_field()) - Ms.q * (Na - Nc)
+    )
+    H_K_T = H_K.q.to("T", equivalencies=u.magnetic_flux_field())
+    hstart = -H_K_T + 0.5 * u.T
+    hfinal = -H_K_T - 0.5 * u.T
     hstep = -0.01 * u.T
 
     # generate input files
@@ -153,10 +180,11 @@ def test_switch_prolate_ellipsoid(loop_bin, mesh_bin, tmp_path):
     # test that switch only happens after known value
     hystloop = me.from_csv(tmp_path / f"hyst_{system_name}" / "mammos_hysteresis.csv")
     df = hystloop.to_dataframe()
-    reduction_factor = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
-    switching_field = reduction_factor * nucleation_field
-    assert all(df[df["B_ext_T"] > -switching_field.value]["J_par_T"] > 0)
-    assert all(df[df["B_ext_T"] < -switching_field.value]["J_par_T"] < 0)
+    factor_sw = ((np.cos(theta)) ** (2 / 3) + (np.sin(theta)) ** (2 / 3)) ** (-3 / 2)
+    H_sw = me.Entity("SwitchingFieldCoercivity", H_K.q * factor_sw)
+    H_sw_T = H_sw.q.to("T", equivalencies=u.magnetic_flux_field())
+    assert all(df[df["B_ext_T"] > -H_sw_T.value]["J_par_T"] > 0)
+    assert all(df[df["B_ext_T"] < -H_sw_T.value]["J_par_T"] < 0)
 
 
 def generate_mesh(
