@@ -35,15 +35,16 @@ def test_extrinsic_properties(loop_bin, mesh_bin, tmp_path):
     # intrinsic properties
     # Material intrinsic properties calculated using databases from mammos_dft and
     # mammos_spindynamics and from Kuz'min model
-    Ms = me.Ms(406e3, "A/m")
-    A = me.A(1.4e-12, "J/m")
-    K1 = me.K1(9.3e5, "J/m3")
-    Js = Ms.q.to("T", equivalencies=u.magnetic_flux_field())
+    Ms = me.Entity("SpontaneousMagnetization", 406e3, "A/m")
+    A = me.Entity("ExchangeStiffnessConstant", 1.4e-12, "J/m")
+    K1 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 9.3e5, "J/m3")
+    Js = me.Entity("SpontaneousMagneticPolarization", Ms.q.to("T", equivalencies=u.magnetic_flux_field()))
 
     # external field
-    hstart = 5.0 * u.T
-    hfinal = -5.0 * u.T
-    hstep = -0.25 * u.T
+    mu0_Hk = (2 * K1.q / Ms.q).to("T", equivalencies=u.magnetic_flux_field())
+    hstart = mu0_Hk
+    hfinal = -mu0_Hk
+    hstep = -mu0_Hk / 20
 
     # generate input files
     generate_mesh(mesh_bin, tmp_path, system_name, cube_length.value, mesh_size.value)
@@ -60,12 +61,12 @@ def test_extrinsic_properties(loop_bin, mesh_bin, tmp_path):
         M=M,
         demagnetization_coefficient=1 / 3,
     )
-    expected_Hc = 3.5 * u.MA / u.m
-    expected_Mr = 400 * u.kA / u.m
-    expected_BHmax = 46 * u.kJ / u.m**3
-    assert u.isclose(extrinsic_properties.Hc.q, expected_Hc, rtol=5e-2)
-    assert u.isclose(extrinsic_properties.Mr.q, expected_Mr, rtol=5e-2)
-    assert u.isclose(extrinsic_properties.BHmax.q, expected_BHmax, rtol=5e-2)
+    expected_Hc = me.Entity("CoerciveField", 3500, "kA/m")
+    expected_Mr = me.Entity("RemanentMagnetization", 400, "kA/m")
+    expected_BHmax = me.Entity("MaximumEnergyProduct", 46, "kJ/m3")
+    assert u.isclose(extrinsic_properties.Hc.q, expected_Hc.q, rtol=5e-2)
+    assert u.isclose(extrinsic_properties.Mr.q, expected_Mr.q, rtol=5e-2)
+    assert u.isclose(extrinsic_properties.BHmax.q, expected_BHmax.q, rtol=5e-2)
 
 
 def generate_mesh(mesh_bin: str, tmp_path: os.PathLike, system_name: str, cube_length: int, mesh_size: int) -> None:
