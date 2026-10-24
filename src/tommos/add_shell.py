@@ -8,16 +8,9 @@ import math
 from collections.abc import Sequence
 from pathlib import Path
 
+import meshio
 import numpy as np
 from meshpy.tet import MeshInfo, Options, build  # MeshPy -> TetGen
-
-# Optional: VTU export
-try:
-    import meshio
-
-    HAVE_meshio = True
-except Exception:
-    HAVE_meshio = False
 
 """
 Add graded tetrahedral layers *outside* an existing body mesh using MeshPy (TetGen),
@@ -1086,14 +1079,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     # Optional VTU export
     if args.out_vtu:
         out_vtu = str(Path(args.out_vtu).with_suffix(".vtu"))
-        if not HAVE_meshio:
-            msg = "[warn] meshio not installed; skipping VTU export. pip install meshio"
-            print(msg)
-        else:
-            cells = [("tetra", ijk[:, :4].astype(np.int32))]
-            cell_data = {"mat_id": [ijk[:, 4].astype(np.int32)]}
-            meshio.Mesh(points=knt.astype(np.float64), cells=cells, cell_data=cell_data).write(out_vtu)
-            print(f"[ok] wrote VTU -> {out_vtu}")
+        cells = [("tetra", ijk[:, :4].astype(np.int32))]
+        cell_data = {"mat_id": [ijk[:, 4].astype(np.int32)]}
+        meshio.Mesh(points=knt.astype(np.float64), cells=cells, cell_data=cell_data).write(out_vtu)
+        print(f"[ok] wrote VTU -> {out_vtu}")
 
     if args.out_npz:
         out_npz = str(Path(args.out_npz).with_suffix(".npz"))

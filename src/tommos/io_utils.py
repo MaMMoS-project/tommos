@@ -282,11 +282,7 @@ def convert_sim_csv_to_mammos(csv_path: str | Path, out_path: str | Path | None 
 
     out_path = Path(out_path) if out_path else csv_path
 
-    try:
-        import mammos_entity as me
-    except ImportError:
-        print("[warning] mammos_entity not found, skipping CSV conversion")
-        return
+    import mammos_entity as me
 
     try:
         # The first row is the header: config, B_ext_T, J_par_T, E, gnorm
