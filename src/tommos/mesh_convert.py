@@ -20,23 +20,9 @@ License: MIT
 from __future__ import annotations
 
 import argparse
-from typing import Any
 
+import meshio
 import numpy as np
-
-
-def _try_import_meshio() -> Any | None:
-    """Attempt to import the meshio library.
-
-    Returns:
-        Any | None: The meshio module if available, else None.
-    """
-    try:
-        import meshio  # type: ignore
-
-        return meshio
-    except Exception:
-        return None
 
 
 def npz_to_vtu(npz_path: str, vtu_path: str) -> None:
@@ -67,17 +53,10 @@ def npz_to_vtu(npz_path: str, vtu_path: str) -> None:
     if ijk.shape[1] == 5:
         cell_data["mat_id"] = ijk[:, 4].astype(np.int32)
 
-    meshio = _try_import_meshio()
-    if meshio is not None:
-        cells = [("tetra", conn)]
-        cd = {"mat_id": [cell_data["mat_id"]]} if "mat_id" in cell_data else None
-        m = meshio.Mesh(points=knt, cells=cells, cell_data=cd)
-        m.write(vtu_path)
-        return
-
-    from .io_utils import write_vtu_tetra
-
-    write_vtu_tetra(vtu_path, knt, conn, cell_data=cell_data)
+    cells = [("tetra", conn)]
+    cd = {"mat_id": [cell_data["mat_id"]]} if "mat_id" in cell_data else None
+    m = meshio.Mesh(points=knt, cells=cells, cell_data=cd)
+    m.write(vtu_path)
 
 
 def vtu_to_npz(vtu_path: str, npz_path: str) -> None:
@@ -93,62 +72,34 @@ def vtu_to_npz(vtu_path: str, npz_path: str) -> None:
     Example:
         >>> vtu_to_npz("mesh.vtu", "mesh.npz")
     """
-    meshio = _try_import_meshio()
-    if meshio is not None:
-        m = meshio.read(vtu_path)
-        pts = np.asarray(m.points[:, :3], dtype=np.float64)
+    m = meshio.read(vtu_path)
+    pts = np.asarray(m.points[:, :3], dtype=np.float64)
 
-        tets = None
-        for cb in m.cells:
-            if cb.type in ("tetra", "tetra4"):
-                tets = np.asarray(cb.data, dtype=np.int32)
-                break
-        if tets is None:
-            raise ValueError("No tetra cells found")
+    tets = None
+    for cb in m.cells:
+        if cb.type in ("tetra", "tetra4"):
+            tets = np.asarray(cb.data, dtype=np.int32)
+            break
+    if tets is None:
+        raise ValueError("No tetra cells found")
 
-        mat = None
-        try:
-            cd = m.cell_data_dict.get("mat_id", None)
-            if cd is not None:
-                mat = np.asarray(cd["tetra"], dtype=np.int32).ravel()
-        except Exception:
-            pass
+    mat = None
+    try:
+        cd = m.cell_data_dict.get("mat_id", None)
+        if cd is not None:
+            mat = np.asarray(cd["tetra"], dtype=np.int32).ravel()
+    except Exception:
+        pass
 
-        if mat is None and hasattr(m, "cell_data"):
-            for key, data_list in m.cell_data.items():
-                if key == "mat_id":
-                    for cell_block, arr in zip(m.cells, data_list, strict=False):
-                        if cell_block.type in ("tetra", "tetra4"):
-                            mat = np.asarray(arr, dtype=np.int32).ravel()
-                            break
+    if mat is None and hasattr(m, "cell_data"):
+        for key, data_list in m.cell_data.items():
+            if key == "mat_id":
+                for cell_block, arr in zip(m.cells, data_list, strict=False):
+                    if cell_block.type in ("tetra", "tetra4"):
+                        mat = np.asarray(arr, dtype=np.int32).ravel()
+                        break
 
-        ijk = tets if mat is None else np.column_stack([tets, mat])
-        np.savez(npz_path, knt=pts, ijk=ijk)
-        return
-
-    import xml.etree.ElementTree as ET
-
-    tree = ET.parse(vtu_path)
-    root = tree.getroot()
-
-    pts_arr = root.find(".//Points/DataArray")
-    if pts_arr is None or pts_arr.text is None:
-        raise ValueError("Could not locate Points/DataArray")
-    pts = np.fromstring(pts_arr.text.strip(), sep=" ", dtype=np.float32).reshape(-1, 3).astype(np.float64)
-
-    conn_arr = root.find('.//Cells/DataArray[@Name="connectivity"]')
-    if conn_arr is None or conn_arr.text is None:
-        raise ValueError("Could not locate Cells/connectivity DataArray")
-    conn = np.fromstring(conn_arr.text.strip(), sep=" ", dtype=np.int32)
-    tets = conn.reshape(-1, 4)
-
-    mat_arr = root.find('.//CellData/DataArray[@Name="mat_id"]')
-    if mat_arr is not None and mat_arr.text and mat_arr.text.strip():
-        mat = np.fromstring(mat_arr.text.strip(), sep=" ", dtype=np.int32)
-        ijk = np.column_stack([tets, mat])
-    else:
-        ijk = tets
-
+    ijk = tets if mat is None else np.column_stack([tets, mat])
     np.savez(npz_path, knt=pts, ijk=ijk)
 
 
