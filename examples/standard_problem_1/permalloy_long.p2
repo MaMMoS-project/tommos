@@ -1,0 +1,20 @@
+[mesh]
+size = 1.0e-9
+
+[initial state]
+mx = -0.01745240643728351
+my = 0.9998476951563913
+mz = 0.0
+
+[field]
+hstart = 0.05
+hfinal = -0.05
+hstep = -0.001
+hx = -0.01745240643728351
+hy = 0.9998476951563913
+hz = 0.0
+loop = True
+mstep = 10.0
+
+[minimizer]
+tol_fun = 1e-8
