@@ -1,0 +1,7 @@
+# mammos csv v3
+Index,MagneticFluxDensity,MagneticPolarisation,EnergyDensity,EnergyDensity
+,,,,
+https://w3id.org/emmo#EMMO_0cd58641_824c_4851_907f_f4c3be76630c,https://w3id.org/emmo#EMMO_961d1aba_f75e_4411_aaa4_457f7516ed6b,https://w3id.org/emmo#EMMO_74a096dd_cc83_4c7e_b704_0541620ff18d,https://w3id.org/emmo/domain/magnetic-materials#EMMO_56258d3a-f2ee-554e-af99-499dd8620457,https://w3id.org/emmo/domain/magnetic-materials#EMMO_56258d3a-f2ee-554e-af99-499dd8620457
+,T,T,J / m3,J / m3
+config,B_ext_T,J_par_T,E,gnorm
+0.0,0.0,-0.0004088760205,76818.48603103826,60.25176315704349
