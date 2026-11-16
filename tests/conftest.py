@@ -6,7 +6,7 @@ import pytest
 @pytest.fixture(scope="session")
 def loop_bin():
     """Define `loop` bin."""
-    return "tommos loop"
+    return "tommos loop --add-shell"
 
 
 @pytest.fixture(scope="session")
