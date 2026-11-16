@@ -51,6 +51,9 @@ If you attempt to mechanically verify a claim, fact, or hypothesis and the verif
 
 You are strictly **prohibited** from proposing an alternative hypothesis, generating a new claim, or pivoting to a new solution in the same response. You must explicitly state: *"I cannot verify my claim and must stop."* and immediately end your turn to await user guidance.
 
+## Rule 13: Never change stable tests
+Tests in the directory `tests/stable` are supposed to guarantee that the CLI always stay valid and that physical behavior is reproduced. Never change or delete them.
+
 
 
 ## LaTeX Paper Writing Rules
