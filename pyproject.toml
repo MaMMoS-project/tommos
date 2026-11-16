@@ -101,7 +101,7 @@ sample-gpu = { cmd = "cd samples && ./run_cube.sh" }
 [tool.pixi.environments]
 default = { solve-group = "tommos" }
 cpu = { solve-group = "tommos" }
-test = { features = ["test"], solve-group = "tommos" }
+test = { features = ["sample", "test"], solve-group = "tommos" }
 lint = { features = ["lint"], solve-group = "tommos" }
 build = { features = ["build"], solve-group = "tommos" }
 sample = { features = ["sample"], solve-group = "tommos" }
