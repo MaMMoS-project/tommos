@@ -10,7 +10,7 @@ name = "tommos"
 version = "0.1.0"
 description = "High-performance finite-element micromagnetic simulations on CPUs and GPUs using JAX and C++."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = "3.13*"
 authors = [
   { name = "MaMMoS-project" },
 ]
