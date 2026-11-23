@@ -1,0 +1,58 @@
+{
+  "creators": [
+    {
+      "name": "Schrefl, Thomas",
+      "orcid": "0000-0002-0871-0520",
+      "affiliation": "University for Continuing Education Krems"
+    },
+    {
+      "name": "Fischbacher, Johann",
+      "orcid": "0000-0002-0815-5379",
+      "affiliation": "University for Continuing Education Krems"
+    },
+    {
+      "name": "Kovacs, Alexander",
+      "orcid": "0000-0002-8413-1950",
+      "affiliation": "University for Continuing Education Krems"
+    },
+    { 
+      "name": "Pile, Santa",
+      "orcid": "0000-0001-7854-847X",
+      "affiliation": "University for Continuing Education Krems"
+    },
+    {
+      "name": "Lang, Martin",
+      "orcid": "0000-0001-7104-7867",
+      "affiliation": "Max Planck Institute for the Structure and Dynamics of Matter"
+    },
+    { 
+      "name": "Adams, Michael",
+      "orcid": "0000-0001-9269-8087",
+      "affiliation": "Max Planck Institute for the Structure and Dynamics of Matter"
+    },
+    {
+      "name": "Petrocchi, Andrea",
+      "orcid": "0009-0005-1867-6732",
+      "affiliation": "Max Planck Institute for the Structure and Dynamics of Matter"
+    },
+    {
+      "name": "Fangohr, Hans",
+      "orcid": "0000-0001-5494-7193",
+      "affiliation": "Max Planck Institute for the Structure and Dynamics of Matter, University of Southampton"
+    }
+  ],
+  "title": "tommos",
+  "description": "Tommos is a high-performance finite-element micromagnetic simulation package combining JAX and C++ for CPU- and GPU-based computations. It supports sparse-matrix formulations of micromagnetic interactions, numerical energy minimization, and the simulation of magnetic hysteresis.",
+  "upload_type": "software",
+  "language": "eng",
+  "grants": [
+    {
+      "id": "10.13039/501100000780::101135546"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "mammos"
+    }
+  ]
+}
