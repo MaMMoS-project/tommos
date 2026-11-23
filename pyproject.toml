@@ -10,7 +10,7 @@ name = "tommos"
 version = "0.1.0"
 description = "High-performance finite-element micromagnetic simulations on CPUs and GPUs using JAX and C++."
 readme = "README.md"
-requires-python = "3.13.*"
+requires-python = ">=3.11"
 authors = [
   { name = "MaMMoS-project" },
 ]
@@ -49,6 +49,9 @@ platforms = ["linux-64", "osx-arm64", "osx-64"]
 
 [tool.pixi.pypi-dependencies]
 tommos = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+python = "3.13.*"
 
 [tool.pixi.tasks]
 sample = { cmd = "cd samples && ./run_cube.sh" }
