@@ -53,7 +53,7 @@
     }
   ],
   "title": "tommos",
-  "description": "Matrix-free micromagnetic simulations with JAX.",
+  "description": "Tommos is a high-performance finite-element micromagnetic simulation package combining JAX and C++ for CPU- and GPU-based computations. It supports sparse-matrix formulations of micromagnetic interactions, numerical energy minimization, and the simulation of magnetic hysteresis.",
   "upload_type": "software",
   "language": "eng",
   "grants": [
