@@ -8,7 +8,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+import meshio
 import numpy as np
+from meshpy.tet import MeshInfo, Options
+from meshpy.tet import build as tet_build
 from scipy.spatial import Delaunay
 
 """
@@ -41,24 +44,6 @@ Dependencies:
 - For .vtu export: meshio -> pip install meshio
 - Grid backend works without meshpy; visualization still needs meshio.
 """
-
-
-# Optional: visualization
-try:
-    import meshio
-
-    HAVE_meshio = True
-except Exception:
-    HAVE_meshio = False
-
-# Optional: TetGen backend
-try:
-    from meshpy.tet import MeshInfo, Options
-    from meshpy.tet import build as tet_build
-
-    HAVE_meshpy = True
-except Exception:
-    HAVE_meshpy = False
 
 # ------------------------------- Utilities -------------------------------
 
@@ -597,9 +582,6 @@ def mesh_backend_meshpy_polygon(
     Returns:
         tuple[np.ndarray, np.ndarray]: (Nodes, Connectivity).
     """
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
-
     # 2) Build 3D vertices for top and bottom in LOCAL coords, then map to WORLD
     top_z, bottom_z = t / 2.0, -t / 2.0
     verts_top = np.hstack([polygon, np.full((polygon.shape[0], 1), top_z)])
@@ -787,9 +769,6 @@ def mesh_backend_meshpy_elliptic_cylinder(
     Returns:
         tuple[np.ndarray, np.ndarray]: (Nodes, Connectivity).
     """
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
-
     # 1) Build boundary polygon (LOCAL XY) approximating the ellipse (CCW)
     polygon = build_ellipse_polygon(a=a, b=b, n=128)  # shape (N, 2)
 
@@ -1043,9 +1022,6 @@ def mesh_backend_meshpy_eye(
     Returns:
         tuple[np.ndarray, np.ndarray]: (Nodes, Connectivity).
     """
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
-
     # 1) Build boundary polygon (LOCAL XY). build_eye_polygon returns CCW points
     polygon = build_eye_polygon(length=length, width=width)  # shape (N, 2)
 
@@ -1304,8 +1280,6 @@ def mesh_backend_meshpy_box(
     Returns:
         tuple[np.ndarray, np.ndarray]: (Nodes, Connectivity).
     """
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
     Lx, Ly, Lz = extents
     half = (0.5 * Lx, 0.5 * Ly, 0.5 * Lz)
     points: list[tuple[float, float, float]] = []
@@ -1360,8 +1334,6 @@ def mesh_backend_meshpy_ellipsoid(
     Returns:
         tuple[np.ndarray, np.ndarray]: (Nodes, Connectivity).
     """
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
     # Build LOCAL ellipsoid surface then orient to world using (ex,ey,ez)
     V_local, F = ellipsoid_surface(extents, subdiv=subdiv)
     V_world = np.ascontiguousarray(
@@ -1866,16 +1838,11 @@ def run_single_solid_mesher(  # noqa: D417
     out_vtu: str | None = None
     if not no_vis:
         out_vtu = with_ext(vis_name, ".vtu")
-        if not HAVE_meshio:
-            msg = "[warn] meshio not installed; skipping .vtu export. Install with: pip install meshio"
-            print(msg, file=sys.stderr)
-            out_vtu = None
-        else:
-            cells = [("tetra", ijk[:, :4].astype(np.int32))]
-            cell_data = {"mat_id": [ijk[:, 4].astype(np.int32)]}
-            m = meshio.Mesh(points=knt, cells=cells, cell_data=cell_data)
-            m.write(out_vtu)
-            print(f"[ok] Wrote visualization: {out_vtu} (cell_data: mat_id)")
+        cells = [("tetra", ijk[:, :4].astype(np.int32))]
+        cell_data = {"mat_id": [ijk[:, 4].astype(np.int32)]}
+        m = meshio.Mesh(points=knt, cells=cells, cell_data=cell_data)
+        m.write(out_vtu)
+        print(f"[ok] Wrote visualization: {out_vtu} (cell_data: mat_id)")
 
     if not return_arrays:
         # Drop large arrays now and return only paths
@@ -1924,9 +1891,6 @@ def mesh_backend_meshpy_poly_gb(
     import subprocess
 
     from scipy.spatial import ConvexHull, HalfspaceIntersection
-
-    if not HAVE_meshpy:
-        raise RuntimeError("meshpy is not installed. Install with: pip install meshpy")
 
     opt_stop_parts = []
     val_to_use = neper_tol if neper_tol is not None else 1e-1
